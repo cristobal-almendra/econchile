@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.local
+
+# Runtime data
+*.db
+*.sqlite
+# NOTE: sample_response.json stays TRACKED — tests/test_parsers.py needs it
+# (real API fixture, 8MB). Trim to a smaller slice in v0.2.
+multi_series_sample.json
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Scratch / working notes
+playground.py
+discussion_prompt.txt
+
+# Study notes (private)
+study/
