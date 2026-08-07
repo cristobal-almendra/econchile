@@ -1,9 +1,10 @@
 """
 Response parsing for the BCCh REST API.
 
-Takes raw HTTP response bodies (UTF-16 with BOM or plain UTF-8 JSON),
-decodes them, validates the API-level status code, and returns clean,
-typed Python dicts ready for downstream consumption.
+Takes raw HTTP response bodies (UTF-16 with BOM, plain UTF-8, or
+latin-1 / ISO-8859-1), decodes them, validates the API-level status
+code, and returns clean, typed Python dicts ready for downstream
+consumption.
 
 Uses ``converters.safe_float`` and ``converters.safe_date`` for value
 normalisation, inheriting their crash-safe guarantees.
@@ -52,10 +53,14 @@ def parse_response(raw_text: str | bytes) -> dict[str, Any]:
     if isinstance(raw_text, bytes):
         # BCCh returns UTF-16 LE with BOM (bytes: FF FE).
         # Python's 'utf-16' codec auto-detects and strips the BOM.
+        # Fallback order: UTF-16 BOM → UTF-8 → latin-1 (never fails).
         if raw_text[:2] == b'\xff\xfe':
             raw_text = raw_text.decode('utf-16')
         else:
-            raw_text = raw_text.decode('utf-8')
+            try:
+                raw_text = raw_text.decode('utf-8')
+            except UnicodeDecodeError:
+                raw_text = raw_text.decode('latin-1')
 
     data: dict[str, Any] = json.loads(raw_text)
 

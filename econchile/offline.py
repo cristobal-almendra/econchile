@@ -31,11 +31,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import requests
+
 from econchile.cache import Cache, make_key
 from econchile.client import _resolve_series
 from econchile.fetcher import Fetcher, _validate_dates
 from econchile.series_map import Series
-from econchile.types import BcchOfflineError, SeriesResult
+from econchile.types import BcchApiError, BcchOfflineError, SeriesResult
 
 
 class OfflineClient:
@@ -102,7 +104,7 @@ class OfflineClient:
 
         try:
             result = self._fetcher.fetch(resolved, desde, hasta)
-        except Exception as exc:
+        except (BcchApiError, requests.RequestException, OSError) as exc:
             # API failure (BcchApiError, network error, timeout): fall
             # back to the cache before giving up.
             cached = self._cache.get(key)

@@ -133,6 +133,38 @@ class TestFetchEncoding:
         assert [o.date for o in result.observations] == ["2024-01-02", "2024-01-03"]
         assert [o.value for o in result.observations] == [897.68, 901.13]
 
+    def test_latin1_response_parsed(self, fake_get):
+        """ISO-8859-1 (latin-1) response body is parsed correctly.
+
+        The live BCCh API sometimes serves latin-1 — raw accented
+        bytes, e.g. "ó" as 0xF3 — for series with Spanish titles
+        (USD "dólar", TPM "Política", IPC, IMACEC, PIB).  Without a
+        latin-1 fallback, utf-8 decoding raises UnicodeDecodeError.
+        """
+        payload = {
+            "Codigo": 0,
+            "Descripcion": "Success",
+            "Series": {
+                "seriesId": DEFAULT_SERIES,
+                "descripEsp": "Tipo de cambio nominal (dólar observado $CLP/USD)",
+                "descripIng": "Nominal exchange rate (Observed dollar $CLP/USD)",
+                "Obs": [
+                    {"indexDateString": "02-01-2024", "value": "897.68", "statusCode": "OK"},
+                ],
+            },
+            "SeriesInfos": [],
+        }
+        # ensure_ascii=False keeps the accented characters as RAW bytes
+        # (0xF3 = "ó" in latin-1) — this is what breaks utf-8 decoding.
+        fake_get.response_body = json.dumps(payload, ensure_ascii=False).encode("latin-1")
+
+        result = Fetcher(token="test-token-123").fetch(
+            Series.USD, "2024-01-01", "2024-01-31"
+        )
+
+        assert result.metadata["descripEsp"] == payload["Series"]["descripEsp"]
+        assert [o.value for o in result.observations] == [897.68]
+
 
 # ─── SeriesResult construction ─────────────────────────────────────────
 
@@ -245,8 +277,10 @@ class TestFetchErrors:
             raise requests.ConnectionError("connection refused")
 
         monkeypatch.setattr("requests.get", boom)
+        # No retries here — error WRAPPING is what's under test
+        # (retry behavior lives in TestFetchRetry).
         with pytest.raises(BcchApiError):
-            Fetcher(token="test-token-123").fetch(
+            Fetcher(token="test-token-123", max_retries=0).fetch(
                 Series.USD, "2024-01-01", "2024-01-31"
             )
 
@@ -259,10 +293,163 @@ class TestFetchErrors:
             return resp
 
         monkeypatch.setattr("requests.get", five_hundred)
+        # No retries here — the WRAP is what's under test
+        # (retry behavior lives in TestFetchRetry).
+        with pytest.raises(BcchApiError):
+            Fetcher(token="test-token-123", max_retries=0).fetch(
+                Series.USD, "2024-01-01", "2024-01-31"
+            )
+
+    def test_undecodable_body_wrapped_as_bcch_api_error(self, monkeypatch):
+        """Truncated UTF-16 body → BcchApiError, never a raw UnicodeDecodeError.
+
+        latin-1 can never fail, but a UTF-16-BOM body with an odd byte
+        count still raises UnicodeDecodeError — it must surface wrapped
+        as BcchApiError, matching the documented error contract.
+        """
+        def truncated_utf16(url, **kwargs):
+            resp = requests.Response()
+            resp.status_code = 200
+            resp._content = b"\xff\xfe\x41"  # BOM + single byte: invalid UTF-16
+            return resp
+
+        monkeypatch.setattr("requests.get", truncated_utf16)
         with pytest.raises(BcchApiError):
             Fetcher(token="test-token-123").fetch(
                 Series.USD, "2024-01-01", "2024-01-31"
             )
+
+
+# ─── Retry behavior ────────────────────────────────────────────────────
+
+
+class TestFetchRetry:
+    """Retry logic for transient failures (network, HTTP 5xx, HTML bodies).
+
+    Policy (see specs/v011_bugfix_spec.md): retry network errors,
+    HTTP >= 500, and non-JSON/HTML bodies.  Never retry HTTP 4xx or
+    business errors (Codigo != 0).
+    """
+
+    def _scripted_get(self, monkeypatch, script):
+        """Install a requests.get that walks through ``script``.
+
+        Each item is either an exception instance to raise or bytes to
+        use as the response body.  Once exhausted, the LAST item keeps
+        repeating (used by the exhaustion tests).
+        """
+        calls = []
+
+        def fake(url, **kwargs):
+            calls.append(url)
+            step = script[min(len(calls) - 1, len(script) - 1)]
+            if isinstance(step, Exception):
+                raise step
+            resp = requests.Response()
+            resp.status_code = 200
+            resp._content = step
+            return resp
+
+        monkeypatch.setattr("requests.get", fake)
+        return calls
+
+    def test_network_error_retries_then_succeeds(self, monkeypatch):
+        """Two network errors then a valid response → success after retries."""
+        calls = self._scripted_get(
+            monkeypatch,
+            [requests.ConnectionError("down"), requests.ConnectionError("down"), make_response()],
+        )
+        result = Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+            Series.USD, "2024-01-01", "2024-01-31"
+        )
+        assert len(calls) == 3  # 1 attempt + 2 retries
+        assert result.source == "api"
+
+    def test_network_error_exhausts_retries(self, monkeypatch):
+        """Persistent network failure → BcchApiError after max_retries+1 attempts."""
+        calls = self._scripted_get(
+            monkeypatch,
+            [requests.ConnectionError("down")],  # repeats forever
+        )
+        with pytest.raises(BcchApiError):
+            Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+                Series.USD, "2024-01-01", "2024-01-31"
+            )
+        assert len(calls) == 3
+
+    def test_html_body_retries_then_succeeds(self, monkeypatch):
+        """HTML 'Página no encontrada' page (HTTP 200) → retried, then success."""
+        html = b"<!DOCTYPE html><html><body>P\xc3\xa1gina no encontrada</body></html>"
+        calls = self._scripted_get(monkeypatch, [html, make_response()])
+
+        result = Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+            Series.USD, "2024-01-01", "2024-01-31"
+        )
+
+        assert len(calls) == 2
+        assert [o.value for o in result.observations] == [897.68, 901.13]
+
+    def test_html_body_exhausts_retries(self, monkeypatch):
+        """Persistent HTML body → BcchApiError after max_retries+1 attempts."""
+        html = b"<!DOCTYPE html><html><body>error</body></html>"
+        calls = self._scripted_get(monkeypatch, [html])
+
+        with pytest.raises(BcchApiError):
+            Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+                Series.USD, "2024-01-01", "2024-01-31"
+            )
+        assert len(calls) == 3
+
+    def test_http_500_retries(self, monkeypatch):
+        """HTTP 500 → retried; persistent 500 → BcchApiError after 3 attempts."""
+        calls = []
+
+        def five_hundred(url, **kwargs):
+            calls.append(url)
+            resp = requests.Response()
+            resp.status_code = 500
+            resp._content = b""
+            return resp
+
+        monkeypatch.setattr("requests.get", five_hundred)
+        with pytest.raises(BcchApiError):
+            Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+                Series.USD, "2024-01-01", "2024-01-31"
+            )
+        assert len(calls) == 3
+
+    def test_http_401_not_retried(self, monkeypatch):
+        """HTTP 4xx (client errors) are NOT retried — exactly one attempt."""
+        calls = []
+
+        def unauthorized(url, **kwargs):
+            calls.append(url)
+            resp = requests.Response()
+            resp.status_code = 401
+            resp._content = b""
+            return resp
+
+        monkeypatch.setattr("requests.get", unauthorized)
+        with pytest.raises(BcchApiError):
+            Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+                Series.USD, "2024-01-01", "2024-01-31"
+            )
+        assert len(calls) == 1
+
+    def test_business_error_not_retried(self, fake_get):
+        """Codigo != 0 (business error) is NOT retried — exactly one attempt."""
+        fake_get.response_body = make_response(codigo=-1, descripcion="Serie no encontrada")
+        with pytest.raises(BcchApiError):
+            Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+                Series.USD, "2024-01-01", "2024-01-31"
+            )
+        assert len(fake_get.urls) == 1
+
+    def test_token_with_slash_is_url_encoded(self, fake_get):
+        """Tokens containing '/' are URL-encoded (%2F), never pasted raw."""
+        Fetcher(token="tok/en/123").fetch(Series.USD, "2024-01-01", "2024-01-31")
+        assert "token=tok%2Fen%2F123" in fake_get.urls[0]
+        assert "token=tok/en/123" not in fake_get.urls[0]
 
 
 # ─── Token resolution ──────────────────────────────────────────────────

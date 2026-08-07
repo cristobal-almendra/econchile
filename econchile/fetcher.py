@@ -16,8 +16,10 @@ Live-tested API facts baked into this module:
   ``desde``/``hasta`` arguments are mapped to ``firstDate``/``lastDate``
   in the URL — never passed through verbatim.
 * The response encoding is UNSTABLE: sometimes UTF-16 with a BOM
-  (``FF FE``), sometimes plain UTF-8.  The decoder checks for the BOM and
-  falls back to UTF-8, exactly like :func:`econchile.parsers.parse_response`.
+  (``FF FE``), sometimes plain UTF-8, and occasionally latin-1
+  (ISO-8859-1) with raw accented bytes.  The decoder checks for the BOM
+  first, then tries UTF-8, and falls back to latin-1 (which never fails),
+  exactly like :func:`econchile.parsers.parse_response`.
 * Multi-series requests (repeated ``timeseries`` params) return error
   ``Codigo: -50``.  One series per request — batching is the caller's job.
 * API errors come back as HTTP 200 with ``Codigo != 0`` in the JSON body,
@@ -29,6 +31,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 
@@ -89,12 +92,16 @@ def _validate_dates(desde: str, hasta: str) -> None:
 def _decode(content: bytes) -> str:
     """Decode a BCCh response body.
 
-    The real API returns UTF-16 LE with a BOM (``FF FE``); anything
-    else (tests, proxies, future API changes) is assumed UTF-8.
+    The real API returns UTF-16 LE with a BOM (``FF FE``), sometimes
+    plain UTF-8, and occasionally latin-1 (raw accented bytes).
+    Decode order: UTF-16 BOM → UTF-8 → latin-1 (latin-1 never fails).
     """
     if content[:2] == b"\xff\xfe":
         return content.decode("utf-16")
-    return content.decode("utf-8")
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError:
+        return content.decode("latin-1")
 
 
 # ─── Public API ────────────────────────────────────────────────────────
@@ -108,6 +115,11 @@ class Fetcher:
         timeout_seconds: Request timeout in seconds (default 30).
         timeout: Deprecated alias for ``timeout_seconds``, kept so
             :class:`~econchile.client.BcchClient` can pass ``timeout=``.
+        max_retries: Number of retries AFTER the first attempt for
+            transient failures (default 2 → 3 total attempts).
+        retry_backoff: Base seconds for exponential backoff between
+            retries.  Sleep is ``retry_backoff * 2**attempt``.
+            Set to 0 to disable sleeping (tests).
 
     Raises:
         ValueError: If no token is provided AND ``BCCH_TOKEN`` is unset.
@@ -118,6 +130,8 @@ class Fetcher:
         token: str | None = None,
         timeout_seconds: int = 30,
         timeout: int | None = None,
+        max_retries: int = 2,
+        retry_backoff: float = 0.5,
     ) -> None:
         # Explicit token wins; otherwise fall back to the environment.
         self._token = token if token is not None else os.environ.get("BCCH_TOKEN")
@@ -128,6 +142,8 @@ class Fetcher:
         if timeout is not None:
             timeout_seconds = timeout
         self._timeout = timeout_seconds
+        self._max_retries = max_retries
+        self._retry_backoff = retry_backoff
 
     # ── Internals ──────────────────────────────────────────────────
 
@@ -186,27 +202,43 @@ class Fetcher:
         code = _series_code(series)
         _validate_dates(desde, hasta)
         url = self._build_url(code, desde, hasta)
-        try:
-            resp = self._get(url, code, desde, hasta)
-        except requests.RequestException as exc:
-            # NOTE: only the exception TYPE is reported — str(exc) would
-            # embed the URL, which carries the token.
-            raise BcchApiError(
-                f"network error fetching series {code} ({desde}..{hasta}): "
-                f"{type(exc).__name__}"
-            ) from None
-        try:
-            return parse_response(_decode(resp.content))
-        except ParsingError as exc:
-            # BCCh answered with Codigo != 0 — a business error, not a
-            # transport one, so the raw code/description are preserved.
-            raise BcchApiError(
-                f"BCCh API error for series {code} ({desde}..{hasta}): {exc}"
-            ) from exc
-        except json.JSONDecodeError as exc:
-            raise BcchApiError(
-                f"invalid JSON response for series {code} ({desde}..{hasta}): {exc}"
-            ) from exc
+
+        for attempt in range(self._max_retries + 1):
+            if attempt > 0 and self._retry_backoff > 0:
+                time.sleep(self._retry_backoff * 2 ** (attempt - 1))
+            is_last = attempt >= self._max_retries
+            try:
+                resp = self._get(url, code, desde, hasta)
+            except BcchApiError as exc:
+                http_status = exc.context.get("http_status", 0)
+                if http_status >= 500 and not is_last:
+                    continue
+                raise
+            except requests.RequestException as exc:
+                if not is_last:
+                    continue
+                raise BcchApiError(
+                    f"network error fetching series {code} ({desde}..{hasta}): "
+                    f"{type(exc).__name__}"
+                ) from None
+            try:
+                text = _decode(resp.content)
+            except UnicodeDecodeError as exc:
+                raise BcchApiError(
+                    f"undecodable response for series {code} ({desde}..{hasta}): {exc}"
+                ) from exc
+            try:
+                return parse_response(text)
+            except ParsingError as exc:
+                raise BcchApiError(
+                    f"BCCh API error for series {code} ({desde}..{hasta}): {exc}"
+                ) from exc
+            except json.JSONDecodeError as exc:
+                if not is_last:
+                    continue
+                raise BcchApiError(
+                    f"invalid JSON response for series {code} ({desde}..{hasta}): {exc}"
+                ) from exc
 
     def fetch(self, series: str | Series, desde: str, hasta: str) -> SeriesResult:
         """Main entry: fetch + parse a series into a :class:`SeriesResult`.

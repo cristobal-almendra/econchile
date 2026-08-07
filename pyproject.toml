@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "econchile"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python library to retrieve Chilean macroeconomic data"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -22,6 +22,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = ["requests>=2.31"]
+
+[project.urls]
+Homepage = "https://github.com/cristobal-almendra/econchile"
+Repository = "https://github.com/cristobal-almendra/econchile"
 
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
