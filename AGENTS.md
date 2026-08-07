@@ -32,6 +32,7 @@ Resolution chain: API → SQLite cache → raise. Two clients: `BcchClient` is c
 - Public API takes dates as `YYYY-MM-DD`; BCCh sends `DD-MM-YYYY` internally — converters handle the conversion, don't mix formats.
 - BCCh marks missing data with `statusCode == "ND"` → parsed as `value=None`, never zero or an exception.
 - BCCh response encoding is unstable: UTF-16 with BOM or UTF-8. Parsers must try `utf-16` (strips BOM) then fall back to `utf-8`.
+- BCCh API tokens may contain `/` — the fetcher URL-encodes them automatically via `urlencode` (`/` → `%2F`). Never build API URLs by hand-formatting the raw token into the query string; always pass it through `urllib.parse.urlencode`/`quote`.
 
 ## Contribution flow
 
