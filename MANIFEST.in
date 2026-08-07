@@ -1,0 +1,25 @@
+# MANIFEST.in — controls what goes in the sdist (source distribution)
+# The wheel is governed by pyproject.toml [tool.setuptools.packages.find].
+#
+# Goal: ship source + tests + specs, but EXCLUDE the 8MB API fixture
+# (tests need it in the repo, but it should not bloat the sdist) and
+# exclude any leftover build artifacts / private study notes.
+
+# Include the real test fixture only if explicitly wanted — for v0.1 we
+# exclude it from the sdist to keep the download small. Tests that depend
+# on it are skipped/guarded in CI when the file is absent.
+exclude sample_response.json
+exclude multi_series_sample.json
+
+# Private annotated learning notes never ship
+recursive-exclude econchile/study *
+
+# Build artifacts
+recursive-exclude dist *
+recursive-exclude build *
+recursive-exclude *.egg-info *
+
+# Python caches
+recursive-exclude **/__pycache__ *
+global-exclude *.py[cod]
+global-exclude *.db
