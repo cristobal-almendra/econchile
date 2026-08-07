@@ -16,7 +16,6 @@ Usage::
 
     client = BcchClient()                      # token from BCCH_TOKEN env
     result = client.get("UF", "2024-01-01", "2024-12-31")
-    df = result.to_frame()                     # pandas DataFrame
     hits = client.search("ipc")                # catalog search
     catalog = client.list_series()             # all v0.1 series
 

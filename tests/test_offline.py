@@ -15,6 +15,7 @@ import sqlite3
 import sys
 
 import pytest
+import requests
 
 # Add project root to path so we can import econchile.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -324,3 +325,28 @@ class TestValidation:
                 offline.get(Series.USD, "garbage", HASTA)
         finally:
             monkeypatch.undo()
+
+
+class TestNonApiExceptions:
+    """Only API/network failures may trigger the cache fallback."""
+
+    def test_non_api_exception_propagates(self, offline, sample_result):
+        """A programming error (ValueError) must NOT be masked as 'API down'.
+
+        The fallback exists for API failures only — real bugs must
+        propagate so they are never hidden by stale-cache serving.
+        """
+        offline._cache.set_series(Series.USD, DESDE, HASTA, sample_result)
+        offline.stub_error = ValueError("programming bug — must not be masked")
+
+        with pytest.raises(ValueError):
+            offline.get(Series.USD, DESDE, HASTA)
+
+    def test_network_error_still_falls_back(self, offline, sample_result):
+        """requests network errors still trigger the cache fallback."""
+        offline._cache.set_series(Series.USD, DESDE, HASTA, sample_result)
+        offline.stub_error = requests.ConnectionError("connection refused")
+
+        result = offline.get(Series.USD, DESDE, HASTA)
+
+        assert result == sample_result

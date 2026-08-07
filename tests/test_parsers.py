@@ -37,6 +37,10 @@ def single_series_response():
     The sample_response.json is UTF-16 LE with BOM (FF FE).
     We decode it to a string here so callers can use it directly.
     """
+    if not os.path.exists(SAMPLE_PATH):
+        # The fixture is excluded from the sdist (MANIFEST.in) — tests
+        # must skip gracefully when it is absent, not crash.
+        pytest.skip("sample_response.json not present (excluded from sdist)")
     with open(SAMPLE_PATH, "rb") as f:
         raw = f.read()
     # Decode UTF-16 (with BOM auto-handled by Python's utf-16 codec)
@@ -267,6 +271,36 @@ class TestParseResponse:
         assert result["series_id"] == "F073.TCO.PRE.Z.D"
         # Date should be converted from DD-MM-YYYY to YYYY-MM-DD.
         assert result["observations"][0]["date"] == "1982-08-09"
+        assert result["observations"][0]["value"] == 55.65
+
+    def test_latin1_bytes_handled(self):
+        """Raw latin-1 bytes (accented Spanish titles) are parsed correctly.
+
+        The live API sometimes serves ISO-8859-1 with raw accented
+        bytes (e.g. 'ó' as 0xF3) for series whose titles contain
+        Spanish accents.  utf-8 decoding of those bytes raises
+        UnicodeDecodeError, so a latin-1 fallback is required.
+        """
+        raw_json = json.dumps({
+            "Codigo": 0,
+            "Descripcion": "Success",
+            "Series": {
+                "seriesId": "F073.TCO.PRE.Z.D",
+                "descripEsp": "Tipo de cambio nominal (dólar observado $CLP/USD)",
+                "descripIng": "Nominal exchange rate (Observed dollar $CLP/USD)",
+                "Obs": [
+                    {"indexDateString": "09-08-1982", "value": "55.65", "statusCode": "OK"},
+                ],
+            },
+            "SeriesInfos": [],
+        }, ensure_ascii=False).encode("latin-1")
+
+        result = parse_response(raw_json)
+
+        assert result["series_id"] == "F073.TCO.PRE.Z.D"
+        assert result["metadata"]["descripEsp"] == (
+            "Tipo de cambio nominal (dólar observado $CLP/USD)"
+        )
         assert result["observations"][0]["value"] == 55.65
 
 
