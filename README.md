@@ -1,20 +1,26 @@
 # econchile
 
+[![PyPI version](https://img.shields.io/pypi/v/econchile.svg)](https://pypi.org/project/econchile/)
+[![Python versions](https://img.shields.io/pypi/pyversions/econchile.svg)](https://pypi.org/project/econchile/)
+[![CI](https://github.com/cristobal-almendra/econchile/actions/workflows/workflow.yml/badge.svg)](https://github.com/cristobal-almendra/econchile/actions/workflows/workflow.yml)
+
 Chilean macroeconomic data (Banco Central de Chile) for Python.
 
 `econchile` is a thin, practical client for the BCCh SIE REST web service. It downloads official series (UF, USD, TPM, IPC_VAR, IPC_INDEX, IMACEC, PIB), parses them into clean, typed data, and keeps a local SQLite cache so repeat queries are instant and your scripts survive API outages.
 
 ## Install
 
-Once v0.1 is on PyPI: `pip install econchile`. Until then, install from source:
+```bash
+pip install econchile
+```
+
+Requires Python 3.10+. To install from source instead:
 
 ```bash
-git clone <repo-url> econchile
+git clone https://github.com/cristobal-almendra/econchile.git
 cd econchile
 pip install -e .
 ```
-
-Requires Python 3.10+.
 
 ## Authentication
 
