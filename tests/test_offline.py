@@ -350,3 +350,35 @@ class TestNonApiExceptions:
         result = offline.get(Series.USD, DESDE, HASTA)
 
         assert result == sample_result
+
+
+class TestNoToken:
+    """OfflineClient works without a token (cache-only) — v0.1.2 fix.
+
+    Construction must not require a token; a missing token is treated as
+    an API failure at fetch time, so the cache fallback applies.
+    """
+
+    def test_constructs_without_token(self, tmp_path, monkeypatch):
+        """OfflineClient(token=None) with no env token constructs fine."""
+        monkeypatch.delenv("BCCH_TOKEN", raising=False)
+        client = OfflineClient(token=None, db_path=tmp_path / "no_token.db")
+        assert client is not None
+
+    def test_cache_served_without_token(self, tmp_path, monkeypatch, sample_result):
+        """Cached data is served with no token configured."""
+        monkeypatch.delenv("BCCH_TOKEN", raising=False)
+        client = OfflineClient(token=None, db_path=tmp_path / "no_token.db")
+        client._cache.set_series(Series.USD, DESDE, HASTA, sample_result)
+
+        result = client.get(Series.USD, DESDE, HASTA)
+
+        assert result == sample_result
+
+    def test_offline_error_without_token(self, tmp_path, monkeypatch):
+        """No token AND no cache → BcchOfflineError (not ValueError)."""
+        monkeypatch.delenv("BCCH_TOKEN", raising=False)
+        client = OfflineClient(token=None, db_path=tmp_path / "no_token.db")
+
+        with pytest.raises(BcchOfflineError):
+            client.get(Series.USD, DESDE, HASTA)

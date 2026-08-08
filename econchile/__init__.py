@@ -1,6 +1,6 @@
 """econchile — Chilean macroeconomic data, made simple."""
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from econchile.client import BcchClient
 from econchile.series_map import Series

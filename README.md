@@ -88,7 +88,7 @@ for meta in hits:
 - **Missing data**: the BCCh API marks gaps as "ND". These become `value=None`, not zeros or exceptions, check for `None` before using a value.
 - **Representations**: `IPC_VAR` is a monthly % change, `IPC_INDEX` is a base-2023 index. Same variable, different meaning.
 - **Cache freshness**: cached results are reused for 24 hours by default; configure via `ttl_seconds` on `BcchClient(...)` or `OfflineClient(...)` (the cache lives at `~/.econchile/cache.db`).
-- **Errors**: unknown series raise `KeyError`, malformed dates raise `ValueError`, API failures raise `BcchApiError` and `BcchOfflineError` when the offline fallback is also exhausted.
+- **Errors**: unknown series raise `KeyError`, malformed dates raise `ValueError`, API failures raise `BcchApiError` and `BcchOfflineError` when the offline fallback is also exhausted. **No token?** Both clients construct fine without one — the token is only needed when the API is actually called: `BcchClient` cache hits work, and `OfflineClient` serves cached data (a missing token is treated as an API failure, so the cache fallback applies).
 - **Token with special characters**: BCCh API tokens may contain `/` characters. The library URL-encodes them automatically via `urllib.parse.urlencode` (`/` → `%2F`), so you can paste the token as-is. Only if you build request URLs *by hand* (e.g. `curl`) do you need to encode it yourself — `urllib.parse.quote(token)` — otherwise the BCCh API rejects the request.
 
 ## API

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-08-07
+
+### Fixed
+
+- **`OfflineClient` works without a token** — the token is now optional at
+  construction; it is validated at fetch time. A missing token raises
+  `BcchApiError` (before any network I/O) and the existing cache fallback
+  treats it like any other API failure, so cache-only usage works without
+  `BCCH_TOKEN` set. `BcchClient` cache hits also work token-less.
+  Previously `OfflineClient()` could not even be constructed without a
+  token, defeating its documented "survives API outages" purpose.
+
+### Changed
+
+- `Fetcher.__init__` no longer raises `ValueError` when no token is
+  configured — construction never requires credentials. Docstrings and
+  README/AGENTS.md updated accordingly.
+
+### Added
+
+- 5 new contract tests (206 total): token-less construction, cache
+  served without a token, `BcchOfflineError` when no token AND no cache.
+
 ## [0.1.1] - 2026-08-07
 
 ### Fixed

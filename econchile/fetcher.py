@@ -122,7 +122,9 @@ class Fetcher:
             Set to 0 to disable sleeping (tests).
 
     Raises:
-        ValueError: If no token is provided AND ``BCCH_TOKEN`` is unset.
+        BcchApiError: If no token is configured when :meth:`fetch` is
+            called (not at construction time, so cache-only use works
+            without a token).
     """
 
     def __init__(
@@ -134,11 +136,9 @@ class Fetcher:
         retry_backoff: float = 0.5,
     ) -> None:
         # Explicit token wins; otherwise fall back to the environment.
+        # Token may be None — validated at fetch time, not construction,
+        # so OfflineClient/BcchClient can be built for cache-only use.
         self._token = token if token is not None else os.environ.get("BCCH_TOKEN")
-        if not self._token:
-            raise ValueError(
-                "BCCh API token required: pass token=... or set the BCCH_TOKEN env var"
-            )
         if timeout is not None:
             timeout_seconds = timeout
         self._timeout = timeout_seconds
@@ -195,11 +195,17 @@ class Fetcher:
             (keys ``series_id``, ``observations``, ``metadata``).
 
         Raises:
-            ValueError: If ``desde``/``hasta`` are not ``YYYY-MM-DD``.
-            BcchApiError: On HTTP >= 400, on network failure, on API
+            BcchApiError: If no token is configured (raised before any
+                network I/O), on HTTP >= 400, on network failure, on API
                 ``Codigo != 0``, or on a JSON/parse failure.
+            ValueError: If ``desde``/``hasta`` are not ``YYYY-MM-DD``.
         """
         code = _series_code(series)
+        if not self._token:
+            raise BcchApiError(
+                "BCCh API token required: pass token=... or set the BCCH_TOKEN env var",
+                series=code, desde=desde, hasta=hasta,
+            )
         _validate_dates(desde, hasta)
         url = self._build_url(code, desde, hasta)
 

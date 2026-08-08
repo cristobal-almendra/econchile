@@ -100,7 +100,9 @@ class BcchClient:
         timeout: HTTP timeout in seconds (default 30).
 
     Raises:
-        ValueError: If no token is configured (from ``Fetcher``).
+        BcchApiError: If no token is configured when the API is called
+            on a cache miss (raised at fetch time by ``Fetcher``; cache
+            hits work without a token).
     """
 
     def __init__(
