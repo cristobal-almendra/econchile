@@ -33,6 +33,7 @@ Resolution chain: API → SQLite cache → raise. Two clients: `BcchClient` is c
 - BCCh marks missing data with `statusCode == "ND"` → parsed as `value=None`, never zero or an exception.
 - BCCh response encoding is unstable: UTF-16 with BOM, UTF-8, or latin-1 (ISO-8859-1) with raw accented bytes. Decode order: UTF-16 BOM → UTF-8 → latin-1 (latin-1 never fails). Applies to both `fetcher._decode` and `parsers.parse_response`.
 - The fetcher retries transient failures — network errors, HTTP 5xx, and non-JSON/HTML bodies — up to `max_retries` (default 2) with exponential backoff (`retry_backoff * 2**attempt`). HTTP 4xx and `Codigo != 0` business errors are never retried.
+- **Token is optional at construction** (both clients); it is validated at fetch time and a missing token raises `BcchApiError` before any network I/O — so `OfflineClient` serves cached data without a token (the fallback treats it as an API failure), and `BcchClient` cache hits work too.
 - BCCh API tokens may contain `/` — the fetcher URL-encodes them automatically via `urlencode` (`/` → `%2F`). Never build API URLs by hand-formatting the raw token into the query string; always pass it through `urllib.parse.urlencode`/`quote`.
 
 ## Contribution flow

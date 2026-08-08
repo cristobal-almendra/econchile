@@ -52,7 +52,9 @@ class OfflineClient:
         timeout: HTTP timeout in seconds (default 30).
 
     Raises:
-        ValueError: If no token is configured (from ``Fetcher``).
+        BcchApiError: If the API is unreachable because no token is
+            configured (raised at fetch time by ``Fetcher``; the existing
+            fallback catches it and serves the cache).
     """
 
     def __init__(

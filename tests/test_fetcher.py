@@ -492,3 +492,23 @@ class TestTokenSource:
         )
         assert "token=explicit-token-123" in urls[0]
         assert "env-token-999" not in urls[0]
+
+
+class TestNoToken:
+    """Token-less construction + fetch-time BcchApiError (v0.1.2 fix).
+
+    The token must be optional at construction; a missing token is an
+    API-side failure at fetch time (so OfflineClient's fallback works).
+    """
+
+    def test_constructor_without_token_ok(self, monkeypatch):
+        """Fetcher(token=None) with no env token constructs without raising."""
+        monkeypatch.delenv("BCCH_TOKEN", raising=False)
+        Fetcher(token=None)  # must NOT raise at construction
+
+    def test_fetch_without_token_raises_bcch_api_error(self, monkeypatch):
+        """fetch() without a token raises BcchApiError before any I/O."""
+        monkeypatch.delenv("BCCH_TOKEN", raising=False)
+        fetcher = Fetcher(token=None)
+        with pytest.raises(BcchApiError):
+            fetcher.fetch(Series.USD, "2024-01-01", "2024-01-31")
