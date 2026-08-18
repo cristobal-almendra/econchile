@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-08-18
+
+### Fixed
+
+- **PyPI publish now runs only on version tags** — the `publish` job is
+  guarded with `if: startsWith(github.ref, 'refs/tags/v')`. Previously a
+  pull request could trigger a publish (0.1.2 was actually published by a
+  PR-triggered run); now PRs and main pushes can never publish.
+- **Malformed API responses raise `ParsingError`** instead of leaking raw
+  `AttributeError`/`KeyError` — `null`, `[]`, `{}`, missing/invalid
+  `Series` or `seriesId`, and non-list `Obs` are all validated after
+  decoding. A valid response with an empty `Obs` list still returns
+  `observations=[]` (not an error).
+- **HTTP 429 (rate limit) is now retried** like 5xx, with the same
+  `max_retries`/backoff; persistent 429 raises a clean `BcchApiError`.
+
+### Changed
+
+- README: added the Windows PowerShell token setup
+  (`$env:BCCH_TOKEN=...`) and precise offline wording ("falls back to
+  previously cached results when the API is unavailable").
+
+### Added
+
+- Release-level contract tests (`tests/test_release.py`): CI publish
+  guard, pyproject/`__version__` consistency, README auth docs.
+- 13 new tests (223 total).
+
 ## [0.1.2] - 2026-08-07
 
 ### Fixed
