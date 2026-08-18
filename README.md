@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/econchile.svg)](https://pypi.org/project/econchile/)
 [![Python versions](https://img.shields.io/pypi/pyversions/econchile.svg)](https://pypi.org/project/econchile/)
-[![CI](https://github.com/cristobal-almendra/econchile/actions/workflows/workflow.yml/badge.svg)](https://github.com/cristobal-almendra/econchile/actions/workflows/workflow.yml)
+[![CI](https://github.com/cristobal437/econchile/actions/workflows/workflow.yml/badge.svg)](https://github.com/cristobal437/econchile/actions/workflows/workflow.yml)
 
 Chilean macroeconomic data (Banco Central de Chile) for Python.
 
@@ -17,7 +17,7 @@ pip install econchile
 Requires Python 3.10+. To install from source instead:
 
 ```bash
-git clone https://github.com/cristobal-almendra/econchile.git
+git clone https://github.com/cristobal437/econchile.git
 cd econchile
 pip install -e .
 ```

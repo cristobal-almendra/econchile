@@ -24,8 +24,8 @@ classifiers = [
 dependencies = ["requests>=2.31"]
 
 [project.urls]
-Homepage = "https://github.com/cristobal-almendra/econchile"
-Repository = "https://github.com/cristobal-almendra/econchile"
+Homepage = "https://github.com/cristobal437/econchile"
+Repository = "https://github.com/cristobal437/econchile"
 
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
