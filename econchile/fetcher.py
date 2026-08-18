@@ -217,7 +217,7 @@ class Fetcher:
                 resp = self._get(url, code, desde, hasta)
             except BcchApiError as exc:
                 http_status = exc.context.get("http_status", 0)
-                if http_status >= 500 and not is_last:
+                if (http_status == 429 or http_status >= 500) and not is_last:
                     continue
                 raise
             except requests.RequestException as exc:

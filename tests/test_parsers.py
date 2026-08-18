@@ -323,3 +323,40 @@ class TestErrors:
         assert "Series not found" in msg
         # The message follows a consistent format.
         assert msg == "BCCh API error -1: Series not found"
+
+
+class TestMalformedResponses:
+    """Weird-but-parseable JSON must raise ParsingError, never raw exceptions.
+
+    The live API is trusted, but a proxy, cache, or future API change can
+    serve structurally broken JSON. parse_response must convert every
+    malformed shape into the package error type — no AttributeError,
+    KeyError, or TypeError leaking to callers.
+    """
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "null",
+            "[]",
+            "{}",
+            '{"Codigo": 0, "Series": null}',
+            '{"Codigo": 0, "Series": []}',
+            '{"Codigo": 0, "Series": {}}',  # missing seriesId
+            '{"Codigo": 0, "Series": {"seriesId": "", "Obs": []}}',  # empty seriesId
+            '{"Codigo": 0, "Series": {"seriesId": "X", "Obs": {"a": 1}}}',  # Obs not a list
+            '{"Codigo": 0, "Series": {"seriesId": "X", "Obs": [{}]}}',  # obs missing fields
+        ],
+    )
+    def test_malformed_response_raises_parsing_error(self, payload):
+        """Malformed shapes raise ParsingError (never AttributeError etc.)."""
+        with pytest.raises(ParsingError):
+            parse_response(payload)
+
+    def test_empty_obs_list_is_valid(self):
+        """A well-formed response with zero observations is NOT an error."""
+        result = parse_response(
+            '{"Codigo": 0, "Series": {"seriesId": "X.Y", "Obs": []}}'
+        )
+        assert result["series_id"] == "X.Y"
+        assert result["observations"] == []

@@ -64,6 +64,9 @@ def parse_response(raw_text: str | bytes) -> dict[str, Any]:
 
     data: dict[str, Any] = json.loads(raw_text)
 
+    if not isinstance(data, dict):
+        raise ParsingError(-999, f"unexpected top-level type: {type(data).__name__}")
+
     # ── Validate API-level status ────────────────────────────────────
     codigo: int = data.get("Codigo", 0)
     descripcion: str = data.get("Descripcion", "")
@@ -71,10 +74,24 @@ def parse_response(raw_text: str | bytes) -> dict[str, Any]:
     if codigo != 0:
         raise ParsingError(codigo, descripcion)
 
-    # ── Extract series info ──────────────────────────────────────────
-    series: dict[str, Any] = data.get("Series", {})
+    # ── Validate structure ───────────────────────────────────────────
+    series = data.get("Series")
+    if not isinstance(series, dict):
+        raise ParsingError(-999, f"Series missing or not a dict: {type(series).__name__}")
+
     series_id: str = series.get("seriesId", "")
-    raw_obs: list[dict[str, str]] = series.get("Obs", [])
+    if not series_id:
+        raise ParsingError(-999, "seriesId missing or empty")
+
+    raw_obs = series.get("Obs", [])
+    if not isinstance(raw_obs, list):
+        raise ParsingError(-999, f"Obs is not a list: {type(raw_obs).__name__}")
+
+    for obs in raw_obs:
+        if not isinstance(obs, dict):
+            raise ParsingError(-999, f"observation is not a dict: {type(obs).__name__}")
+        if "indexDateString" not in obs or "statusCode" not in obs or "value" not in obs:
+            raise ParsingError(-999, "observation missing required fields")
 
     # ── Build result ─────────────────────────────────────────────────
     return {
