@@ -30,6 +30,12 @@ Request a free API token from the BCCh statistics database (SIE), see the offici
 export BCCH_TOKEN="your-token-here"
 ```
 
+Windows PowerShell:
+
+```powershell
+$env:BCCH_TOKEN="your-token-here"
+```
+
 The library reads `BCCH_TOKEN` from the environment — it does not load `.env` files itself. The token is required for v0.1.
 
 ## Quickstart
@@ -59,7 +65,7 @@ Dates are always `YYYY-MM-DD`. Missing observations have `value=None`.
 from econchile.offline import OfflineClient
 
 client = OfflineClient()
-result = client.get(Series.USD, "2024-01-01", "2024-03-31")  # survives API outages
+result = client.get(Series.USD, "2024-01-01", "2024-03-31")  # falls back to previously cached results when the API is unavailable
 ```
 
 ## Available series (v0.1)

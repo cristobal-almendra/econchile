@@ -437,13 +437,54 @@ class TestFetchRetry:
         assert len(calls) == 1
 
     def test_business_error_not_retried(self, fake_get):
-        """Codigo != 0 (business error) is NOT retried — exactly one attempt."""
+        """Codigo != 0 (business error) is NOT retried — one attempt only."""
         fake_get.response_body = make_response(codigo=-1, descripcion="Serie no encontrada")
         with pytest.raises(BcchApiError):
             Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
                 Series.USD, "2024-01-01", "2024-01-31"
             )
         assert len(fake_get.urls) == 1
+
+    def test_http_429_retried_then_succeeds(self, monkeypatch):
+        """HTTP 429 is retryable — a 429 followed by success succeeds."""
+        urls = []
+
+        def first_429_then_ok(url, **kwargs):
+            urls.append(url)
+            if len(urls) == 1:
+                resp = requests.Response()
+                resp.status_code = 429
+                resp._content = b""
+                return resp
+            resp = requests.Response()
+            resp.status_code = 200
+            resp._content = make_response()
+            return resp
+
+        monkeypatch.setattr("requests.get", first_429_then_ok)
+        result = Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+            Series.USD, "2024-01-01", "2024-01-31"
+        )
+        assert len(urls) == 2
+        assert [o.value for o in result.observations] == [897.68, 901.13]
+
+    def test_http_429_exhausts_retries(self, monkeypatch):
+        """Persistent 429 → BcchApiError after max_retries+1 attempts."""
+        urls = []
+
+        def always_429(url, **kwargs):
+            urls.append(url)
+            resp = requests.Response()
+            resp.status_code = 429
+            resp._content = b""
+            return resp
+
+        monkeypatch.setattr("requests.get", always_429)
+        with pytest.raises(BcchApiError):
+            Fetcher(token="t", max_retries=2, retry_backoff=0).fetch(
+                Series.USD, "2024-01-01", "2024-01-31"
+            )
+        assert len(urls) == 3
 
     def test_token_with_slash_is_url_encoded(self, fake_get):
         """Tokens containing '/' are URL-encoded (%2F), never pasted raw."""
