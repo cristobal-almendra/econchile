@@ -4,7 +4,7 @@
 
 Cristobal registered a PyPI Trusted Publisher on pypi.org:
 - PyPI project: `econchile`
-- GitHub owner: `cristobal-almendra`
+- GitHub owner: `cristobal437`
 - GitHub repo: `econchile`
 - Workflow filename: `workflow.yml` (MUST be this exact filename — the
   publisher registration matches on it)

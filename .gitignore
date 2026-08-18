@@ -10,6 +10,7 @@ venv/
 # IDE
 .vscode/
 .idea/
+.hermes/
 
 # OS
 .DS_Store

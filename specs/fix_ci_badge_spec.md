@@ -28,7 +28,7 @@ No other file changes.
 2. Workflow file is still valid YAML; only that one line added (no version bump, no
    source changes, no test changes).
 3. After Hermes re-runs the failed job `31205038308`, its conclusion becomes `success`
-   and the badge `https://github.com/cristobal-almendra/econchile/actions/workflows/workflow.yml/badge.svg`
+   and the badge `https://github.com/cristobal437/econchile/actions/workflows/workflow.yml/badge.svg`
    reports `passing`.
 
 ## Out of scope
