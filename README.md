@@ -120,6 +120,14 @@ pip install -e . && pip install pytest
 python -m pytest tests/
 ```
 
+Want to see the whole library in action? Run the interactive walkthrough:
+
+```bash
+jupyter notebook examples/econchile_walkthrough.ipynb
+```
+
+Works without a token for the first sections (catalog, search, errors, offline) — only the live-data cells need `BCCH_TOKEN`.
+
 ## License
 
 MIT
