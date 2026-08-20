@@ -6,6 +6,12 @@
 
 Chilean macroeconomic data (Banco Central de Chile) for Python.
 
+> [!WARNING]
+> **Unofficial, community-driven project.** Not developed, endorsed, or
+> supported by the Banco Central de Chile. Data is sourced from the BCCh
+> public API; users are responsible for validating values against the
+> official sources before making decisions based on them.
+
 `econchile` is a thin, practical client for the BCCh SIE REST web service. It downloads official series (UF, USD, TPM, IPC_VAR, IPC_INDEX, IMACEC, PIB), parses them into clean, typed data, and keeps a local SQLite cache so repeat queries are instant and your scripts survive API outages.
 
 ## Install
