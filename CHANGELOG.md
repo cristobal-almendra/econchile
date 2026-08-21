@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-22
+
+### Added
+
+- **Indexed catalog expanded from 7 to 28 series** — every new code
+  live-verified against the BCCh API before inclusion:
+  - FX & money: EURO, TCM, TCR, UTM, IVP (plus existing UF, USD)
+  - Rates: TASA_HIPOTECARIA (plus TPM)
+  - Prices: IPC_ANUAL, IPC_SAE, IPP (plus IPC_VAR, IPC_INDEX)
+  - Activity: IMACEC_SA, IMACEC_NO_MINERO, PIB_SA, PIB_CORRIENTE,
+    PIB_NO_MINERO (plus IMACEC, PIB)
+  - Labor: DESEMPLEO, FUERZA_TRABAJO, OCUPADOS
+  - Expectations: TPM_EXPECTED, IPC_EXPECTED
+  - External: EXPORTACIONES_COBRE
+  - Macro: PIB_PER_CAPITA
+- `data/indexed_series.json` — machine-readable catalog of the 28
+  indexed series (name, code, frequency, representation, titles).
+- README: 28-row "Indexed series" table + note that the full BCCh
+  catalog (~30k series) is reachable via raw codes.
+
+### Notes
+
+- `EURO` (F072.EUR.USD.N.O.D) is **USD per EUR** (~0.86), not CLP/EUR —
+  documented in the docstring.
+- `IPP` last updated by BCCh in 2023-08 (upstream staleness, documented).
+- `IPC_VAR` keeps its existing code (backwards-compatible — no breaking
+  changes).
+
 ## [0.1.3] - 2026-08-18
 
 ### Fixed
