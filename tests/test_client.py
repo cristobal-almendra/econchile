@@ -250,7 +250,13 @@ class TestSearch:
         results = client.search("ipc")
 
         ids = {m.series_id for m in results}
-        assert ids == {Series.IPC_VAR.value, Series.IPC_INDEX.value}
+        assert ids == {
+            Series.IPC_VAR.value,
+            Series.IPC_INDEX.value,
+            Series.IPC_ANUAL.value,
+            Series.IPC_SAE.value,
+            Series.IPC_EXPECTED.value,
+        }
 
     def test_search_case_insensitive(self, client):
         """search('UF') == search('uf')."""
@@ -284,8 +290,8 @@ class TestListSeries:
     """client.list_series()."""
 
     def test_returns_seven(self, client):
-        """list_series() → 7 SeriesMeta objects."""
-        assert len(client.list_series()) == 7
+        """list_series() → all indexed SeriesMeta objects."""
+        assert len(client.list_series()) == len(list(Series))
 
     def test_all_are_series_meta(self, client):
         """Every item is a SeriesMeta."""

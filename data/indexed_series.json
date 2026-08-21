@@ -1,0 +1,226 @@
+[
+  {
+    "name": "UF",
+    "code": "F073.UFF.PRE.Z.D",
+    "frequency": "DAILY",
+    "representation": "LEVEL",
+    "spanish_title": "Unidad de Fomento (UF)",
+    "english_title": "Unidad de Fomento (UF)"
+  },
+  {
+    "name": "USD",
+    "code": "F073.TCO.PRE.Z.D",
+    "frequency": "DAILY",
+    "representation": "LEVEL",
+    "spanish_title": "Tipo de cambio nominal (dólar observado $CLP/USD)",
+    "english_title": "Nominal exchange rate (Observed dollar $CLP/USD)"
+  },
+  {
+    "name": "EURO",
+    "code": "F072.EUR.USD.N.O.D",
+    "frequency": "DAILY",
+    "representation": "LEVEL",
+    "spanish_title": "Tipo de cambio euro/dólar (USD por EUR)",
+    "english_title": "Euro/US dollar exchange rate (USD per EUR)"
+  },
+  {
+    "name": "TCM",
+    "code": "F073.TCM.IND.199502.D",
+    "frequency": "DAILY",
+    "representation": "INDEX",
+    "spanish_title": "Tipo de cambio medio (índice base 199502=1)",
+    "english_title": "Average exchange rate index (base 199502=1)"
+  },
+  {
+    "name": "TCR",
+    "code": "F073.TCR.IND.199101.M",
+    "frequency": "MONTHLY",
+    "representation": "INDEX",
+    "spanish_title": "Tipo de cambio real (índice base 199101=1)",
+    "english_title": "Real exchange rate index (base 199101=1)"
+  },
+  {
+    "name": "UTM",
+    "code": "F073.UTR.PRE.Z.M",
+    "frequency": "MONTHLY",
+    "representation": "LEVEL",
+    "spanish_title": "Unidad Tributaria Mensual (UTM)",
+    "english_title": "Monthly Tax Unit (UTM)"
+  },
+  {
+    "name": "IVP",
+    "code": "F073.IVP.PRE.Z.D",
+    "frequency": "DAILY",
+    "representation": "LEVEL",
+    "spanish_title": "Índice de Valor Real (IVP)",
+    "english_title": "Real Value Index (IVP)"
+  },
+  {
+    "name": "TPM",
+    "code": "F022.TPM.TIN.D001.NO.Z.D",
+    "frequency": "DAILY",
+    "representation": "LEVEL",
+    "spanish_title": "Tasa de política monetaria (TPM)",
+    "english_title": "Monetary policy rate (MPR)"
+  },
+  {
+    "name": "TASA_HIPOTECARIA",
+    "code": "F022.VIV.TIP.MA03.UF.Z.M",
+    "frequency": "MONTHLY",
+    "representation": "LEVEL",
+    "spanish_title": "Tasa de interés de créditos hipotecarios (en UF)",
+    "english_title": "Mortgage lending rate (in UF)"
+  },
+  {
+    "name": "IPC_VAR",
+    "code": "F074.IPC.VAR.Z.Z.C.M",
+    "frequency": "MONTHLY",
+    "representation": "MOM",
+    "spanish_title": "IPC variación mensual",
+    "english_title": "CPI monthly change"
+  },
+  {
+    "name": "IPC_ANUAL",
+    "code": "G073.IPC.V12.2023.M",
+    "frequency": "MONTHLY",
+    "representation": "YOY",
+    "spanish_title": "IPC variación anual (base 2023)",
+    "english_title": "CPI annual change (base 2023)"
+  },
+  {
+    "name": "IPC_INDEX",
+    "code": "F074.IPC.IND.Z.2023.C.M",
+    "frequency": "MONTHLY",
+    "representation": "INDEX",
+    "spanish_title": "IPC índice general base 2023=100",
+    "english_title": "CPI general index base 2023=100"
+  },
+  {
+    "name": "IPC_SAE",
+    "code": "F074.IPCSAE.VAR.Z.2023.C.M",
+    "frequency": "MONTHLY",
+    "representation": "MOM",
+    "spanish_title": "IPC estacionalmente ajustado, variación mensual (base 2023)",
+    "english_title": "CPI seasonally adjusted, monthly change (base 2023)"
+  },
+  {
+    "name": "IPP",
+    "code": "F075.IPP.IND.P0551.2014.Z.M",
+    "frequency": "MONTHLY",
+    "representation": "INDEX",
+    "spanish_title": "Índice de precios de producción (IPP) — BCCh dejó de actualizar después de 2023-08",
+    "english_title": "Producer price index (PPI) — BCCh stopped updating after 2023-08"
+  },
+  {
+    "name": "IMACEC",
+    "code": "F032.IMC.IND.Z.Z.EP18.Z.Z.0.M",
+    "frequency": "MONTHLY",
+    "representation": "INDEX",
+    "spanish_title": "Imacec empalmado, serie original (índice 2018=100)",
+    "english_title": "Imacec spliced, original series (index 2018=100)"
+  },
+  {
+    "name": "IMACEC_SA",
+    "code": "F032.IMC.IND.Z.Z.EP18.Z.Z.1.M",
+    "frequency": "MONTHLY",
+    "representation": "INDEX",
+    "spanish_title": "Imacec empalmado, desestacionalizado (índice 2018=100)",
+    "english_title": "Imacec spliced, seasonally adjusted (index 2018=100)"
+  },
+  {
+    "name": "IMACEC_NO_MINERO",
+    "code": "F032.IMC.IND.Z.Z.EP18.N03.Z.0.M",
+    "frequency": "MONTHLY",
+    "representation": "INDEX",
+    "spanish_title": "Imacec empalmado, sin minería (índice 2018=100)",
+    "english_title": "Imacec spliced, excluding mining (index 2018=100)"
+  },
+  {
+    "name": "PIB",
+    "code": "F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T",
+    "frequency": "QUARTERLY",
+    "representation": "LEVEL",
+    "spanish_title": "PIB, volumen a precios del año anterior encadenado (base 2018)",
+    "english_title": "GDP, volume at previous year prices chained (base 2018)"
+  },
+  {
+    "name": "PIB_SA",
+    "code": "F032.PIB.FLU.R.CLP.EP18.Z.Z.1.T",
+    "frequency": "QUARTERLY",
+    "representation": "LEVEL",
+    "spanish_title": "PIB, volumen a precios del año anterior encadenado, desestacionalizado (base 2018)",
+    "english_title": "GDP, volume at previous year prices chained, seasonally adjusted (base 2018)"
+  },
+  {
+    "name": "PIB_CORRIENTE",
+    "code": "F032.PIB.FLU.N.CLP.EP18.Z.Z.0.T",
+    "frequency": "QUARTERLY",
+    "representation": "LEVEL",
+    "spanish_title": "PIB, valores corrientes (base 2018)",
+    "english_title": "GDP, current prices (base 2018)"
+  },
+  {
+    "name": "PIB_NO_MINERO",
+    "code": "F032.PIB.FLU.R.CLP.EP18.N03.Z.0.T",
+    "frequency": "QUARTERLY",
+    "representation": "LEVEL",
+    "spanish_title": "PIB, volumen a precios del año anterior encadenado, sin minería (base 2018)",
+    "english_title": "GDP, volume at previous year prices chained, excluding mining (base 2018)"
+  },
+  {
+    "name": "DESEMPLEO",
+    "code": "F049.DES.TAS.INE9.10.M",
+    "frequency": "MONTHLY",
+    "representation": "LEVEL",
+    "spanish_title": "Tasa de desocupación",
+    "english_title": "Unemployment rate"
+  },
+  {
+    "name": "FUERZA_TRABAJO",
+    "code": "F049.FTR.PMT.INE9.01.M",
+    "frequency": "MONTHLY",
+    "representation": "LEVEL",
+    "spanish_title": "Fuerza de trabajo",
+    "english_title": "Labor force"
+  },
+  {
+    "name": "OCUPADOS",
+    "code": "F049.OCU.PMT.INE9.01.M",
+    "frequency": "MONTHLY",
+    "representation": "LEVEL",
+    "spanish_title": "Personas ocupadas",
+    "english_title": "Employed persons"
+  },
+  {
+    "name": "TPM_EXPECTED",
+    "code": "F089.TPM.TAS.11.M",
+    "frequency": "MONTHLY",
+    "representation": "LEVEL",
+    "spanish_title": "Expectativa de TPM a 11 meses",
+    "english_title": "TPM expectation 11 months ahead"
+  },
+  {
+    "name": "IPC_EXPECTED",
+    "code": "F089.IPC.V12.14.M",
+    "frequency": "MONTHLY",
+    "representation": "YOY",
+    "spanish_title": "Expectativa de inflación IPC a 12 meses (11 meses adelante)",
+    "english_title": "CPI inflation expectation 12 months ahead (11 months forward)"
+  },
+  {
+    "name": "EXPORTACIONES_COBRE",
+    "code": "F068.B1.FLU.A1.0.C.N.Z.Z.Z.Z.6.0.M",
+    "frequency": "MONTHLY",
+    "representation": "LEVEL",
+    "spanish_title": "Exportaciones de cobre",
+    "english_title": "Copper exports"
+  },
+  {
+    "name": "PIB_PER_CAPITA",
+    "code": "F012.PPCP.FLU.N.7.AME.CL.USD.FMI.Z.0.A",
+    "frequency": "ANNUAL",
+    "representation": "LEVEL",
+    "spanish_title": "PIB per cápita (USD PPP, FMI)",
+    "english_title": "GDP per capita (PPP USD, IMF)"
+  }
+]

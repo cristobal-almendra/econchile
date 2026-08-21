@@ -12,7 +12,7 @@ Chilean macroeconomic data (Banco Central de Chile) for Python.
 > public API; users are responsible for validating values against the
 > official sources before making decisions based on them.
 
-`econchile` is a thin, practical client for the BCCh SIE REST web service. It downloads official series (UF, USD, TPM, IPC_VAR, IPC_INDEX, IMACEC, PIB), parses them into clean, typed data, and keeps a local SQLite cache so repeat queries are instant and your scripts survive API outages.
+`econchile` is a thin, practical client for the BCCh SIE REST web service. It downloads official series (UF, USD, EURO, TPM, IPC, IMACEC, PIB, and more), parses them into clean, typed data, and keeps a local SQLite cache so repeat queries are instant and your scripts survive API outages.
 
 ## Install
 
@@ -74,19 +74,81 @@ client = OfflineClient()
 result = client.get(Series.USD, "2024-01-01", "2024-03-31")  # falls back to previously cached results when the API is unavailable
 ```
 
-## Available series (v0.1)
+## Indexed series (v0.2)
+
+The library indexes 28 series for convenient access via `Series.NAME` or `client.get("name")`. All codes were live-verified against the BCCh API.
+
+**FX & money**
 
 | Series | BCCh code | Frequency | Meaning |
 |--------|-----------|-----------|---------|
 | `Series.UF` | `F073.UFF.PRE.Z.D` | daily | Unidad de Fomento |
 | `Series.USD` | `F073.TCO.PRE.Z.D` | daily | Nominal exchange rate (CLP/USD) |
-| `Series.TPM` | `F022.TPM.TIN.D001.NO.Z.D` | daily | Monetary policy rate |
-| `Series.IPC_VAR` | `F074.IPC.VAR.Z.Z.C.M` | monthly | CPI, month-over-month change |
-| `Series.IPC_INDEX` | `F074.IPC.IND.Z.2023.C.M` | monthly | CPI general index (base 2023=100) |
-| `Series.IMACEC` | `F032.IMC.IND.Z.Z.EP18.Z.Z.0.M` | monthly | Economic activity index (base 2018=100) |
-| `Series.PIB` | `F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T` | quarterly | GDP, chained volumes (base 2018) |
+| `Series.EURO` | `F072.EUR.USD.N.O.D` | daily | Euro/USD exchange rate (USD per EUR, NOT CLP/EUR) |
+| `Series.TCM` | `F073.TCM.IND.199502.D` | daily | Average exchange rate index (base 199502=1) |
+| `Series.TCR` | `F073.TCR.IND.199101.M` | monthly | Real exchange rate index (base 199101=1) |
+| `Series.UTM` | `F073.UTR.PRE.Z.M` | monthly | Monthly Tax Unit (UTM) |
+| `Series.IVP` | `F073.IVP.PRE.Z.D` | daily | Real Value Index (IVP) |
 
-More series are planned. Use `client.list_series()` for the full catalog and `client.search("ipc")` to find series by keyword:
+**Rates**
+
+| Series | BCCh code | Frequency | Meaning |
+|--------|-----------|-----------|---------|
+| `Series.TPM` | `F022.TPM.TIN.D001.NO.Z.D` | daily | Monetary policy rate |
+| `Series.TASA_HIPOTECARIA` | `F022.VIV.TIP.MA03.UF.Z.M` | monthly | Mortgage lending rate (in UF) |
+
+**Prices**
+
+| Series | BCCh code | Frequency | Meaning |
+|--------|-----------|-----------|---------|
+| `Series.IPC_VAR` | `F074.IPC.VAR.Z.Z.C.M` | monthly | CPI, month-over-month change |
+| `Series.IPC_ANUAL` | `G073.IPC.V12.2023.M` | monthly | CPI, annual change (base 2023) |
+| `Series.IPC_INDEX` | `F074.IPC.IND.Z.2023.C.M` | monthly | CPI general index (base 2023=100) |
+| `Series.IPC_SAE` | `F074.IPCSAE.VAR.Z.2023.C.M` | monthly | CPI seasonally adjusted, MoM change (base 2023) |
+| `Series.IPP` | `F075.IPP.IND.P0551.2014.Z.M` | monthly | Producer price index (stale: BCCh stopped updating after 2023-08) |
+
+**Activity**
+
+| Series | BCCh code | Frequency | Meaning |
+|--------|-----------|-----------|---------|
+| `Series.IMACEC` | `F032.IMC.IND.Z.Z.EP18.Z.Z.0.M` | monthly | Economic activity index, original (base 2018=100) |
+| `Series.IMACEC_SA` | `F032.IMC.IND.Z.Z.EP18.Z.Z.1.M` | monthly | Economic activity index, seasonally adjusted (base 2018=100) |
+| `Series.IMACEC_NO_MINERO` | `F032.IMC.IND.Z.Z.EP18.N03.Z.0.M` | monthly | Economic activity index, excluding mining (base 2018=100) |
+| `Series.PIB` | `F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T` | quarterly | GDP, chained volumes (base 2018) |
+| `Series.PIB_SA` | `F032.PIB.FLU.R.CLP.EP18.Z.Z.1.T` | quarterly | GDP, chained volumes, seasonally adjusted (base 2018) |
+| `Series.PIB_CORRIENTE` | `F032.PIB.FLU.N.CLP.EP18.Z.Z.0.T` | quarterly | GDP, current prices (base 2018) |
+| `Series.PIB_NO_MINERO` | `F032.PIB.FLU.R.CLP.EP18.N03.Z.0.T` | quarterly | GDP, chained volumes, excluding mining (base 2018) |
+
+**Labor**
+
+| Series | BCCh code | Frequency | Meaning |
+|--------|-----------|-----------|---------|
+| `Series.DESEMPLEO` | `F049.DES.TAS.INE9.10.M` | monthly | Unemployment rate |
+| `Series.FUERZA_TRABAJO` | `F049.FTR.PMT.INE9.01.M` | monthly | Labor force |
+| `Series.OCUPADOS` | `F049.OCU.PMT.INE9.01.M` | monthly | Employed persons |
+
+**Expectations**
+
+| Series | BCCh code | Frequency | Meaning |
+|--------|-----------|-----------|---------|
+| `Series.TPM_EXPECTED` | `F089.TPM.TAS.11.M` | monthly | TPM expectation, 11 months ahead |
+| `Series.IPC_EXPECTED` | `F089.IPC.V12.14.M` | monthly | CPI inflation expectation, 12 months ahead (11 months forward) |
+
+**External**
+
+| Series | BCCh code | Frequency | Meaning |
+|--------|-----------|-----------|---------|
+| `Series.EXPORTACIONES_COBRE` | `F068.B1.FLU.A1.0.C.N.Z.Z.Z.Z.6.0.M` | monthly | Copper exports |
+
+**Macro**
+
+| Series | BCCh code | Frequency | Meaning |
+|--------|-----------|-----------|---------|
+| `Series.PIB_PER_CAPITA` | `F012.PPCP.FLU.N.7.AME.CL.USD.FMI.Z.0.A` | annual | GDP per capita (PPP USD, IMF) |
+
+### Full BCCh catalog
+
+The indexed list above covers the most-used macro series. The full BCCh catalog (~30k series) is reachable via raw codes — pass any BCCh code string to `client.get("F01.CODE...")`. Use `client.search("keyword")` to find series by name, code, or title:
 
 ```python
 hits = client.search("ipc")     # matches name, code, Spanish and English titles
